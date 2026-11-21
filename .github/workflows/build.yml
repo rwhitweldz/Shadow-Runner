@@ -36,6 +36,23 @@ jobs:
           unzip -q Shadow_Runner_Android_Project.zip -d extracted
           cp -r extracted/. .
 
+      - name: Fix Java and Kotlin compatibility
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/build.gradle.kts")
+          s = p.read_text()
+          block = """    compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+          """
+          if "compileOptions {" not in s:
+              s = s.replace("    kotlinOptions {", block + "    kotlinOptions {", 1)
+          p.write_text(s)
+          PY
+
       - name: Build APK
         run: gradle --no-daemon :app:assembleDebug
 
