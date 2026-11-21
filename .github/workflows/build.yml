@@ -36,25 +36,19 @@ jobs:
           unzip -q Shadow_Runner_Android_Project.zip -d extracted
           cp -r extracted/. .
 
-      - name: Fix Java and Kotlin compatibility
+      - name: Force Java compiler target to 17
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/build.gradle.kts")
-          s = p.read_text()
-          block = """    compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
+          cat > force-jvm17.gradle <<'EOF'
+          allprojects {
+              tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+                  sourceCompatibility = "17"
+                  targetCompatibility = "17"
               }
-
-          """
-          if "compileOptions {" not in s:
-              s = s.replace("    kotlinOptions {", block + "    kotlinOptions {", 1)
-          p.write_text(s)
-          PY
+          }
+          EOF
 
       - name: Build APK
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon -I force-jvm17.gradle :app:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
