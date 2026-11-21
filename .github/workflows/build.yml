@@ -48,7 +48,7 @@ jobs:
           EOF
 
       - name: Build APK
-        run: gradle --no-daemon -I force-jvm17.gradle :app:assembleDebug
+        run: gradle --no-daemon -Pkotlin.jvm.target.validation.mode=warning :app:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
