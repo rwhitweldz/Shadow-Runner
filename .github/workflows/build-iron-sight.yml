@@ -1,0 +1,44 @@
+
+name: Build IRON SIGHT Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "IRON_SIGHT_Android_Project.zip"
+      - ".github/workflows/build-iron-sight.yml"
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Install Android SDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract project
+        run: |
+          mkdir extracted
+          unzip -q IRON_SIGHT_Android_Project.zip -d extracted
+          cp -r extracted/. .
+
+      - name: Build APK
+        run: gradle --no-daemon :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iron-sight-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
